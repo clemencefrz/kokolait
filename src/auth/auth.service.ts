@@ -2,10 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { AuthBody } from './auth.controller';
 import { PrismaService } from 'src/prisma.service';
 import bcrypt, { compare } from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { UserPayload } from './jwt.strategy';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
   async login({ authBody }: { authBody: AuthBody }) {
     const { email, password } = authBody;
 
@@ -27,15 +32,15 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new Error('Le mot de passe est invalide');
     }
-    return existingUser.id;
+    return this.authenticateUser({ userId: existingUser.id });
   }
 
-  async hashPasssword({ password }: { password: string }) {
+  private async hashPasssword({ password }: { password: string }) {
     const hashedPassword = await bcrypt.hash(password, 10);
     return hashedPassword;
   }
 
-  async isPasswordValid({
+  private async isPasswordValid({
     password,
     hashPasssword,
   }: {
@@ -45,5 +50,14 @@ export class AuthService {
     const isPasswordValid = await compare(password, hashPasssword);
 
     return isPasswordValid;
+  }
+
+  private authenticateUser({ userId }: UserPayload) {
+    const payload: UserPayload = { userId };
+    return {
+      // 💡 Here the JWT secret key that's used for signing the payload
+      // is the key that was passed in the JwtModule
+      access_token: this.jwtService.sign(payload),
+    };
   }
 }

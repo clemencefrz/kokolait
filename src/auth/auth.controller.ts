@@ -12,6 +12,7 @@ import { UserPayload } from './jwt.strategy';
 import { UserService } from 'src/user/user.service';
 
 export type AuthBody = { email: string; password: string };
+export type CreateUser = { email: string; firstName: string; password: string };
 export type RequestWithUser = {
   user: UserPayload;
 };
@@ -23,14 +24,15 @@ export class AuthController {
     private readonly userService: UserService,
   ) {}
 
-  // 1 - Send user password and email
-  // 2 - API returns a secured token
   @Post('login')
   async login(@Body() authBody: AuthBody) {
     return await this.authService.login({ authBody });
   }
 
-  // 3 - Send secured token to the users
+  @Post('register')
+  async register(@Body() registerBody: CreateUser) {
+    return await this.authService.register({ registerBody });
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get('')

@@ -1,21 +1,32 @@
 import { Form } from "react-router";
 import type { Route } from "./+types/home";
+import z from "zod";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Kokolait" }];
 }
 
+const loginSchema = z.object({
+  email: z.string(),
+  password: z.string(),
+});
+
 export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
   const jsonData = Object.fromEntries(formData);
 
+  const parsedJson = loginSchema.parse(jsonData); // Throw an error if jsonData has not the expected properties.
+  console.log(JSON.stringify(parsedJson));
   const response = await fetch("http://localhost:8000/auth/login", {
     method: "POST",
-    body: JSON.stringify(jsonData),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(parsedJson),
   });
-  console.log({ response });
-  const token = await response.json();
-  console.log({ token });
+
+  const responseJSON = await response.json();
+  console.log({ responseJSON });
   return null;
 }
 

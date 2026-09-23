@@ -5,10 +5,9 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: "Kokolait" }];
 }
 
-export async function clientAction({ request }: Route.ClientActionArgs) {
+export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
   const jsonData = Object.fromEntries(formData);
-  alert(`formData: ${formData}, jsonData: ${jsonData}`);
 
   const response = await fetch("http://localhost:8000/auth/login", {
     method: "POST",

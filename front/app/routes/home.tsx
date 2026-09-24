@@ -6,7 +6,8 @@ import {
 } from "react-router";
 import type { Route } from "./+types/home";
 import z from "zod";
-import { commitUserToken, getUserToken } from "~/session.server";
+import { commitUserToken } from "~/session.server";
+import { getOptionalUser } from "~/auth.server";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Kokolait" }];
@@ -21,12 +22,9 @@ const tokenSchema = z.object({
   access_token: z.string(),
 });
 
-export const loader = async ({
-  request,
-}: LoaderFunctionArgs): Promise<{ isLoggedIn: boolean }> => {
-  const userToken = await getUserToken({ request });
-  const isLoggedIn = Boolean(userToken);
-  return { isLoggedIn };
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await getOptionalUser({ request });
+  return { user };
 };
 
 export async function action({ request }: Route.ClientActionArgs) {
@@ -44,7 +42,6 @@ export async function action({ request }: Route.ClientActionArgs) {
   });
 
   const { access_token } = tokenSchema.parse(await response.json());
-  console.log({ access_token });
 
   return redirect("/", {
     headers: {
@@ -57,12 +54,23 @@ export async function action({ request }: Route.ClientActionArgs) {
 }
 
 export default function Home() {
-  const { isLoggedIn } = useLoaderData<typeof loader>();
+  const { user } = useLoaderData<typeof loader>();
+
+  if (user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex w-full max-w-sm flex-col gap-4">
+          <h1 className="text-2xl font-bold">Bonjour {user.firstName} !</h1>
+          <p>Tu es connectée avec l'adresse {user.email}.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Form method="POST" className="flex w-full max-w-sm flex-col gap-4">
-        <h1 className="text-2xl font-bold">Formulaire</h1>
-        <span>{isLoggedIn ? "Connectée" : "Pas connectée"}</span>
+        <h1 className="text-2xl font-bold">Connexion</h1>
         <input
           type="email"
           name="email"

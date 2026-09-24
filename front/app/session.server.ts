@@ -1,11 +1,12 @@
-import { createCookieSessionStorage } from "react-router";
+import { createCookieSessionStorage, redirect } from "react-router";
 
-const { getSession, commitSession } = createCookieSessionStorage({
-  cookie: {
-    name: "__session",
-    secrets: ["s3cret1"],
-  },
-});
+const { getSession, commitSession, destroySession } =
+  createCookieSessionStorage({
+    cookie: {
+      name: "__session",
+      secrets: ["s3cret1"],
+    },
+  });
 
 export const getUserToken = async ({ request }: { request: Request }) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -22,4 +23,15 @@ export const commitUserToken = async ({
   const session = await getSession(request.headers.get("Cookie"));
   session.set("userToken", userToken);
   return await commitSession(session);
+};
+
+export const logout = async ({ request }: { request: Request }) => {
+  const session = await getSession(request.headers.get("Cookie"));
+
+  const destroyedSession = await destroySession(session);
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": destroyedSession,
+    },
+  });
 };

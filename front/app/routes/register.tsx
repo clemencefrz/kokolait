@@ -16,7 +16,7 @@ const registerSchema = z.object({
 const tokenSchema = z.object({
   access_token: z.string().optional(),
   message: z.string().optional(),
-  error: z.string().optional(),
+  error: z.boolean().optional(),
 });
 
 export async function action({ request }: Route.ActionArgs) {
@@ -33,12 +33,14 @@ export async function action({ request }: Route.ActionArgs) {
     body: JSON.stringify(parsedJson),
   });
 
-  const { access_token, error, message } = tokenSchema.parse(
-    await response.json(),
-  );
+  const responseJson = await response.json();
+
+  console.log("responseJson", responseJson);
+
+  const { access_token, error, message } = tokenSchema.parse(responseJson);
 
   if (error || !access_token) {
-    return { error: true, message };
+    return { error, message };
   }
 
   return await authenticateUser({ request, userToken: access_token });

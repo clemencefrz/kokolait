@@ -1,0 +1,115 @@
+import {
+  Form,
+  Link,
+  redirect,
+  useActionData,
+  type LoaderFunctionArgs,
+} from "react-router";
+import type { Route } from "./+types/register";
+import { getOptionalUser } from "~/auth.server";
+import { z } from "zod";
+import { commitUserToken } from "~/session.server";
+
+export function meta({}: Route.MetaArgs) {
+  return [{ title: "Inscription - Kokolait" }];
+}
+
+const registerSchema = z.object({
+  email: z.string(),
+  password: z.string().min(6),
+  firstName: z.string(),
+});
+
+const tokenSchema = z.object({
+  access_token: z.string().optional(),
+  message: z.string().optional(),
+  error: z.string().optional(),
+});
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await getOptionalUser({ request });
+  if (user) {
+    //L'utilisateur est connecté
+    return redirect("/");
+  }
+  return {};
+};
+
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const jsonData = Object.fromEntries(formData);
+
+  const parsedJson = registerSchema.parse(jsonData); // Throws an error if jsonData has not the expected properties.
+
+  const response = await fetch("http://localhost:8000/auth/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(parsedJson),
+  });
+
+  const { access_token, error, message } = tokenSchema.parse(
+    await response.json(),
+  );
+
+  if (error || !access_token) {
+    return { error: true, message };
+  }
+
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await commitUserToken({
+        request,
+        userToken: access_token,
+      }),
+    },
+  });
+}
+
+export default function Register() {
+  const actionData = useActionData<typeof action>();
+
+  return (
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Form method="POST" className="flex w-full max-w-sm flex-col gap-4">
+        <h1 className="text-2xl font-bold">Inscription</h1>
+        {actionData?.error && (
+          <p className="text-sm text-red-600">{actionData.message}</p>
+        )}
+        <input
+          type="text"
+          name="firstName"
+          placeholder="Prénom"
+          className="rounded-md border border-gray-300 px-3 py-2 dark:border-gray-700"
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          required
+          className="rounded-md border border-gray-300 px-3 py-2 dark:border-gray-700"
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Mot de passe"
+          required
+          className="rounded-md border border-gray-300 px-3 py-2 dark:border-gray-700"
+        />
+        <button
+          type="submit"
+          className="rounded-md bg-blue-600 px-3 py-2 font-medium text-white hover:bg-blue-700"
+        >
+          Créer mon compte
+        </button>
+        <p className="text-sm">
+          Déjà un compte ?{" "}
+          <Link to="/" className="text-blue-600 hover:underline">
+            Se connecter
+          </Link>
+        </p>
+      </Form>
+    </div>
+  );
+}

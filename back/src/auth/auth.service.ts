@@ -37,29 +37,36 @@ export class AuthService {
   }
 
   async register({ registerBody }: { registerBody: CreateUserDto }) {
-    const { email, firstName, password } = registerBody;
+    try {
+      const { email, firstName, password } = registerBody;
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
+      const existingUser = await this.prisma.user.findUnique({
+        where: {
+          email,
+        },
+      });
 
-    if (existingUser) {
-      throw new Error('Un compte existe déjà à cette adresse email.');
+      if (existingUser) {
+        throw new Error('Un compte existe déjà à cette adresse email.');
+      }
+
+      const hashedPassword = await this.hashPasssword({ password });
+
+      const createdUser = await this.prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          firstName,
+        },
+      });
+
+      return this.authenticateUser({ userId: createdUser.id });
+    } catch (error) {
+      return {
+        error: true,
+        message: error.message,
+      };
     }
-
-    const hashedPassword = await this.hashPasssword({ password });
-
-    const createdUser = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        firstName,
-      },
-    });
-
-    return this.authenticateUser({ userId: createdUser.id });
   }
 
   private async hashPasssword({ password }: { password: string }) {

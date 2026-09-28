@@ -1,14 +1,7 @@
-import {
-  Form,
-  Link,
-  redirect,
-  useActionData,
-  type LoaderFunctionArgs,
-} from "react-router";
+import { Form, Link, useActionData } from "react-router";
 import type { Route } from "./+types/register";
-import { getOptionalUser } from "~/auth.server";
 import { z } from "zod";
-import { authenticateUser, commitUserToken } from "~/session.server";
+import { authenticateUser } from "~/session.server";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Inscription - Kokolait" }];

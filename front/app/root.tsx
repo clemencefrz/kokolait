@@ -48,6 +48,7 @@ export const useOptionalUser = () => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const user = useOptionalUser();
   return (
     <html lang="en">
       <head>
@@ -56,12 +57,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: 4,
+        }}
+      >
         <nav>
-          <Link to={"/register"}>Se connecter</Link>
-          <Form method="POST" action="logout">
-            <button type="submit">Se déconnecter</button>
-          </Form>
+          {user ? (
+            <Form method="POST" action="/logout">
+              <button type="submit">Se déconnecter</button>
+            </Form>
+          ) : (
+            <Link to={"/register"}>S'inscrire</Link>
+          )}
         </nav>
         {children}
         <ScrollRestoration />

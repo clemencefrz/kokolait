@@ -1,13 +1,7 @@
-import {
-  Form,
-  redirect,
-  useLoaderData,
-  type LoaderFunctionArgs,
-} from "react-router";
+import { Form } from "react-router";
 import type { Route } from "./+types/home";
 import z from "zod";
-import { authenticateUser, commitUserToken } from "~/session.server";
-import { getOptionalUser } from "~/auth.server";
+import { authenticateUser } from "~/session.server";
 import { useOptionalUser } from "~/root";
 
 export function meta({}: Route.MetaArgs) {
@@ -37,7 +31,9 @@ export async function action({ request }: Route.ClientActionArgs) {
     body: JSON.stringify(parsedJson),
   });
 
-  const { access_token } = tokenSchema.parse(await response.json());
+  const responseJson = await response.json();
+
+  const { access_token } = tokenSchema.parse(responseJson);
 
   return await authenticateUser({ request, userToken: access_token });
 }

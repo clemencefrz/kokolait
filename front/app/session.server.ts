@@ -45,7 +45,7 @@ export const authenticateUser = async ({
 }) => {
   const createdSession = await commitUserToken({ request, userToken });
 
-  redirect("/", {
+  return redirect("/", {
     headers: {
       "Set-Cookie": createdSession,
     },

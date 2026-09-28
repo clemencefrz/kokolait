@@ -8,7 +8,7 @@ import {
 import type { Route } from "./+types/register";
 import { getOptionalUser } from "~/auth.server";
 import { z } from "zod";
-import { commitUserToken } from "~/session.server";
+import { authenticateUser, commitUserToken } from "~/session.server";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Inscription - Kokolait" }];
@@ -57,14 +57,7 @@ export async function action({ request }: Route.ActionArgs) {
     return { error: true, message };
   }
 
-  return redirect("/", {
-    headers: {
-      "Set-Cookie": await commitUserToken({
-        request,
-        userToken: access_token,
-      }),
-    },
-  });
+  return await authenticateUser({ request, userToken: access_token });
 }
 
 export default function Register() {

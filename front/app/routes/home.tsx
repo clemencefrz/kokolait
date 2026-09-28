@@ -6,7 +6,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/home";
 import z from "zod";
-import { commitUserToken } from "~/session.server";
+import { authenticateUser, commitUserToken } from "~/session.server";
 import { getOptionalUser } from "~/auth.server";
 
 export function meta({}: Route.MetaArgs) {
@@ -43,14 +43,7 @@ export async function action({ request }: Route.ClientActionArgs) {
 
   const { access_token } = tokenSchema.parse(await response.json());
 
-  return redirect("/", {
-    headers: {
-      "Set-Cookie": await commitUserToken({
-        request,
-        userToken: access_token,
-      }),
-    },
-  });
+  return await authenticateUser({ request, userToken: access_token });
 }
 
 export default function Home() {

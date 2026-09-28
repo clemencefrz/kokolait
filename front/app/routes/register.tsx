@@ -26,15 +26,6 @@ const tokenSchema = z.object({
   error: z.string().optional(),
 });
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getOptionalUser({ request });
-  if (user) {
-    //L'utilisateur est connecté
-    return redirect("/");
-  }
-  return {};
-};
-
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const jsonData = Object.fromEntries(formData);
@@ -62,6 +53,13 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Register() {
   const actionData = useActionData<typeof action>();
+
+  console.log(
+    "actionData?.error",
+    actionData?.error,
+    "actionData?.message",
+    actionData?.message,
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

@@ -8,6 +8,7 @@ import type { Route } from "./+types/home";
 import z from "zod";
 import { authenticateUser, commitUserToken } from "~/session.server";
 import { getOptionalUser } from "~/auth.server";
+import { useOptionalUser } from "~/root";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Kokolait" }];
@@ -21,11 +22,6 @@ const loginSchema = z.object({
 const tokenSchema = z.object({
   access_token: z.string(),
 });
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getOptionalUser({ request });
-  return { user };
-};
 
 export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -47,7 +43,7 @@ export async function action({ request }: Route.ClientActionArgs) {
 }
 
 export default function Home() {
-  const { user } = useLoaderData<typeof loader>();
+  const user = useOptionalUser();
 
   if (user) {
     return (

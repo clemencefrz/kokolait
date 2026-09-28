@@ -1,14 +1,29 @@
 import {
+  Form,
   isRouteErrorResponse,
+  Link,
   Links,
   Meta,
   Outlet,
+  redirect,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
+  useRouteLoaderData,
+  type LoaderFunctionArgs,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { getOptionalUser } from "./auth.server";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await getOptionalUser({ request });
+  if (user) {
+    //L'utilisateur est connecté
+    return { user };
+  }
+};
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -23,6 +38,15 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+export const useOptionalUser = () => {
+  const data = useRouteLoaderData<typeof loader>("root"); // enables to retrieve the value of an active route
+
+  if (data?.user) {
+    return data.user;
+  }
+  return null;
+};
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -33,6 +57,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <nav>
+          <Link to={"/register"}>Se connecter</Link>
+          <Form method="POST" action="logout">
+            <button type="submit">Se déconnecter</button>
+          </Form>
+        </nav>
         {children}
         <ScrollRestoration />
         <Scripts />
